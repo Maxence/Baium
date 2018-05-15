@@ -8,9 +8,15 @@
 ;~ L2R Assitance
 ;~ This helper can optimise your farming time to be free to PVP
 
+; Scheme
+; Auto Launch if game is crashed
+; Auto Login
+; Auto Select char
+
 ; What we need :
 #include <Date.au3>
 #include <ColorConstants.au3>
+#include <FontConstants.au3>
 #include <GUIConstantsEx.au3>
 #include <GuiListView.au3>
 #include <WindowsConstants.au3>
@@ -25,10 +31,12 @@ Global $hwnd = WinGetHandle("NoxPlayer")
 ;~ Get coordinate from our handler
 Opt("MouseCoordMode", 2)
 Opt("GUIOnEventMode", 1)
-;WinMove("[CLASS:SpotifyMainWindow]", "", Default, Default, 1280, 720)
-WinMove($hwnd, "", Default, Default, 960, 540)
+WinMove($hwnd, "", Default, Default, 1280, 720)
+;WinMove($hwnd, "", Default, Default, 960, 540)
 
 Global $mode_test = false
+
+Global $noxPlayerTopBarHeight = 30;
 
 ; Todays actions
 ; Allows the script to carry on from where it stopped
@@ -37,17 +45,21 @@ $Tc = 0
 Global $Interrupt = 1
 $EventCheck = 0
 
-Global $hGUI = GUICreate("Baium", 560, 250)
+Global $hGUI = GUICreate("Baium", 800, 512)
 $hPic_background = GUICtrlCreatePic(@WorkingDir & "\background.jpg", 0, 0, 0, 0)
 ;; create more controls here
 GUICtrlSetState($hPic_background, $GUI_DISABLE)
 
 GUISetOnEvent($GUI_EVENT_CLOSE, "ThatExit")
 
-$RunBtn = GUICtrlCreateButton("Lancer", 10, 10, 80, 30)
-$StopBtn = GUICtrlCreateButton("Arrêter", 10, 10, 80, 30)
+Local Const $sFont = "Roboto"
+$RunBtn = GUICtrlCreateButton("Assist Me!", 569 , 20, 139, 40)
+GUICtrlSetFont(-1, 19, $FW_HEAVY , '', $sFont)
+$StopBtn = GUICtrlCreateButton("Stop Me!", 569 , 20, 139, 40)
+GUICtrlSetFont(-1, 9, $FW_HEAVY , '', $sFont)
 ;~ GUICtrlSetLimit(-1, 200) ; to limit horizontal scrolling
-Global $idListview = GUICtrlCreateListView("Heure|Message", 10, 50, 540, 190,$LVS_SORTDESCENDING)
+Global $idListview = GUICtrlCreateListView("Date|Message", 500, 66, 277, 260,$LVS_SORTDESCENDING)
+GUICtrlSetFont(-1, 9, $FW_NORMAL, '', $sFont)
 _GUICtrlListView_SetColumnWidth($idListview,0,50)
 _GUICtrlListView_SetColumnWidth($idListview,1,276)
 ;GUICtrlSetOnEvent($RunBtn, "RunnerFunc")
@@ -67,11 +79,59 @@ Func ThatExit()
 EndFunc
 
 Func LogInGame()
-	_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\login", $hwnd, 20, 22, 166, 52)
+	WinSetState($hwnd, "", @SW_SHOW)
+	_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\login.png", $hwnd, 24, 21+$noxPlayerTopBarHeight, 170, 48+$noxPlayerTopBarHeight)
+	;WinSetState($hwnd, "", @SW_HIDE)
+	$disconnectedTxt = _TessOcr(@WorkingDir & "\cache\login.png", @WorkingDir & "\cache\loginscreen")
+	ConsoleWrite("$disconnectedTxt " & $disconnectedTxt & @CRLF)
 EndFunc
 
-ConsoleWrite("test" & @CRLF)
+;~ Fonction OCR qui utilise la librairie Tesseract de HP & Google
+Func _TessOcr($in_image, $out_file)
+	Local $Read
+	Local $iReturn = ShellExecuteWait(@WorkingDir & "\lib\tesseract-ocr\tesseract.exe", $in_image & " " & $out_file & " -psm 6", Null, Null, @SW_HIDE)
+;~ 	ConsoleWrite("@ProgramFilesDir:" & @ProgramFilesDir & " (x86)\Tesseract-OCR\tesseract.exe" & @CRLF)
+;~ 	ConsoleWrite("param:" & '"' & $in_image & '" "' & $out_file & '" ' & '"-l eng"'  & '" ' &'" -psm 6"' & @CRLF)
+	If @error Then
+		MsgBox(0,"Error","ShellExecuteWait Error")
+		Exit
+	EndIf
+	If FileExists($out_file & ".txt") Then
+		$Read = FileRead($out_file & ".txt")
+		;FileDelete($out_file & ".txt")
+	Else
+		$Read = "No file created"
+	EndIf
+	$result = StringSplit($Read, @CRLF)
+	Return $result
+EndFunc   ;==>_TessOcr
 
+Func _checkIsConnected()
+	$sFilePath = @WorkingDir & '\cache\logged.txt'
+	$command = 'netstat -na | find "12000" > ' & $sFilePath
+	RunWait( @ComSpec & " /C " & $command, "", @SW_HIDE )
+	; Open the file for reading and store the handle to a variable.
+    Local $hFileOpen = FileOpen($sFilePath, $FO_READ)
+    If $hFileOpen = -1 Then
+        MsgBox($MB_SYSTEMMODAL, "", "An error occurred when reading the file.")
+        Return False
+    EndIf
+	; Read the contents of the file using the handle returned by FileOpen.
+    Local $sFileRead = FileRead($hFileOpen)
+	; Close the handle returned by FileOpen.
+    FileClose($hFileOpen)
+	$check = StringInStr( $sFileRead, "ESTABLISHED")
+	;ConsoleWrite("$check:" & $check & @CRLF)
+	If $check > 0 Then
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc
+
+LogInGame()
+$test = _checkIsConnected()
+ConsoleWrite("$test " & $test & @CRLF)
 While 1
 	If $Interrupt <> 0 Then
 		$EventCheck = 0
