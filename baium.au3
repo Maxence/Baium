@@ -47,19 +47,96 @@ $EventCheck = 0
 
 Global $hGUI = GUICreate("Baium", 800, 512)
 $hPic_background = GUICtrlCreatePic(@WorkingDir & "\background.jpg", 0, 0, 0, 0)
-;; create more controls here
 GUICtrlSetState($hPic_background, $GUI_DISABLE)
 
 GUISetOnEvent($GUI_EVENT_CLOSE, "ThatExit")
 
-Local Const $sFont = "Roboto"
+Local Const $sFontGeorgia = "Georgia"
+Local Const $sFontRoboto = "Roboto"
+; Grade Char
+GUICtrlCreateLabel("S", 38, 66, 50, 50)
+GUICtrlSetFont(-1, 32, $FW_NORMAL , '', $sFontGeorgia)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X0054EFCF)
+; Nickname Char
+GUICtrlCreateLabel("Muraki", 12, 105, 147, 27)
+GUICtrlSetFont(-1, 18, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+; Class Char
+GUICtrlCreateLabel("Bladedancer", 12, 130, 147, 16)
+GUICtrlSetFont(-1, 10, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+; Level Char
+GUICtrlCreateLabel("Lv190", 12, 145, 147, 25)
+GUICtrlSetFont(-1, 16, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+; Exp Char
+GUICtrlCreateLabel("Exp. 77.19%", 75, 155, 60, 16)
+GUICtrlSetFont(-1, 7, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+; Combat Power
+GUICtrlCreateLabel("Combat Power", 12, 184, 147, 25)
+GUICtrlSetFont(-1, 12, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlCreateLabel("4 995 740", 12, 204, 147, 25)
+GUICtrlSetFont(-1, 18, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X0055C712)
+; Achievement Tier.
+GUICtrlCreateLabel("Achievement Tier.", 12, 250, 147, 20)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlCreateLabel("25", 102, 250, 147, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+; Arena Grade
+GUICtrlCreateLabel("Arena Grade", 12, 263, 147, 20)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlCreateLabel("18", 102, 263, 147, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+; Arena Rank
+GUICtrlCreateLabel("Arena Rank", 12, 276, 147, 20)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlCreateLabel("563", 102, 276, 147, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+; Dungeon list enabled
+; Depend of your choice
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_daily.bmp", 24, 352, 93, 133)
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_toi.bmp", 119, 352, 93, 133)
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_elite.bmp", 214, 352, 93, 133)
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_extraction.bmp", 309, 352, 93, 133)
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_stuff.bmp", 404, 352, 93, 133)
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_adena.bmp", 499, 352, 93, 133)
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_exp.bmp", 594, 352, 93, 133)
+GUICtrlCreatePic(@WorkingDir & "\img\dungeon_mount.bmp", 689, 352, 93, 133)
+; My Dungeons
+GUICtrlCreateLabel("My Dungeons", 12, 318, 215, 55)
+GUICtrlSetFont(-1, 26, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+
 $RunBtn = GUICtrlCreateButton("Assist Me!", 569 , 20, 139, 40)
-GUICtrlSetFont(-1, 19, $FW_HEAVY , '', $sFont)
+GUICtrlSetFont(-1, 19, $FW_HEAVY , '', $sFontRoboto)
 $StopBtn = GUICtrlCreateButton("Stop Me!", 569 , 20, 139, 40)
-GUICtrlSetFont(-1, 9, $FW_HEAVY , '', $sFont)
+GUICtrlSetFont(-1, 9, $FW_HEAVY , '', $sFontRoboto)
 ;~ GUICtrlSetLimit(-1, 200) ; to limit horizontal scrolling
 Global $idListview = GUICtrlCreateListView("Date|Message", 500, 66, 277, 260,$LVS_SORTDESCENDING)
-GUICtrlSetFont(-1, 9, $FW_NORMAL, '', $sFont)
+GUICtrlSetFont(-1, 9, $FW_NORMAL, '', $sFontRoboto)
 _GUICtrlListView_SetColumnWidth($idListview,0,50)
 _GUICtrlListView_SetColumnWidth($idListview,1,276)
 ;GUICtrlSetOnEvent($RunBtn, "RunnerFunc")
