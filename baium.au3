@@ -428,12 +428,16 @@ Func isLoginView()
 	ConsoleWrite("$loginPage " & $loginPage & @CRLF)
 EndFunc
 
+Func getPixelColor($posX, $posY)
+	Return  Hex(PixelGetColor($posX+$playerLeftBarWidth, $posY+$playerTopBarHeight, $hwnd), 6)
+EndFunc
+
 ; Checking if New Popup at the login page are showing
 Func isPopupShow()
-	Local $lookingForWhite = Hex(PixelGetColor(1140+$playerLeftBarWidth, 22+$playerTopBarHeight, $hwnd), 6)
-	Local $lookingForWhite2 = Hex(PixelGetColor(1142+$playerLeftBarWidth, 22+$playerTopBarHeight, $hwnd), 6)
-	Local $lookingForBlack = Hex(PixelGetColor(1132+$playerLeftBarWidth, 25+$playerTopBarHeight, $hwnd), 6)
-	Local $lookingForBlack2 = Hex(PixelGetColor(1141+$playerLeftBarWidth, 18+$playerTopBarHeight, $hwnd), 6)
+	Local $lookingForWhite = getPixelColor(1140, 22)
+	Local $lookingForWhite2 = getPixelColor(1142, 22)
+	Local $lookingForBlack = getPixelColor(1132, 25)
+	Local $lookingForBlack2 = getPixelColor(1141, 18)
 	ConsoleWrite("$lookingForWhite: " & $lookingForWhite & @CRLF)
 	ConsoleWrite("$lookingForWhite2: " & $lookingForWhite2 & @CRLF)
 	ConsoleWrite("$lookingForBlack: " & $lookingForBlack & @CRLF)
@@ -519,12 +523,98 @@ Func updateData($value, $element, $fontColor = "0x0000FFFF")
 EndFunc
 
 Func relaunchApp()
-	Local $posX = 564-7
-	Local $posY = 79-35
-	tap($posX,$posY, 120, "small")
+	;Local $posX = 564-7
+	;Local $posY = 79-35
+	;tap($posX,$posY, 120, "small")
 	;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, $posX+$playerLeftBarWidth, $posY+$playerTopBarHeight, $posX+40+$playerLeftBarWidth, $posY+40+$playerTopBarHeight)
 	;Sleep(25000)
 	;tap(233,312, 120, "small")
+	; First we have to detect if we got tab menu of bluestack
+	Local $searchButtonColorBluestack = getPixelColor(1107, 39)
+	ConsoleWrite("$searchButtonColorBluestack:" & $searchButtonColorBluestack & @CRLF)
+
+	;_SmcreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, 530+$playerLeftBarWidth, 22+$playerTopBarHeight, 530+200+$playerLeftBarWidth, 22+200+$playerTopBarHeight)
+	If $searchButtonColorBluestack = "C87E0F" Then
+		Global $bluestackTapMenu = True
+		Global $playerTopBarHomeHeight = $playerTopBarHeight
+	Else
+		Global $bluestackTapMenu = False
+		Global $playerTopBarHomeHeight = -2
+	EndIf
+	ConsoleWrite("$bluestackTapMenu:" & $bluestackTapMenu & @CRLF)
+	ConsoleWrite("$playerTopBarHomeHeight:" & $playerTopBarHomeHeight & @CRLF)
+	; we have to find these color : FFF, 000, and 53ABD2
+	; Difference between app icon 156px
+	; Difference between line : 185px
+
+	; Test
+	Local $posXStart = 38
+	Local $posYStart = 84
+
+	Local $pixelBetweenApp = 156
+	Local $pixelBetweenLine = 185
+	$posYFirstPixel = 114
+	$posYSecondPixel = 97
+	$posYThirdPixel = 132
+	$posYFourthPixel = 104
+	For $i = 1 To 3 Step 1
+		$posXFirstPixel = 74
+		$posXSecondPixel = 92
+		$posXThirdPixel = 84
+		$posXFourthPixel = 83
+		For $i2 = 1 To 7 Step 1
+			;ConsoleWrite("$posXStart + $playerLeftBarWidth:" & $posXStart + $playerLeftBarWidth & @CRLF)
+			;ConsoleWrite("$posYStart + $playerTopBarHomeHeight:" & $posYStart + $playerTopBarHomeHeight & @CRLF)
+			;ConsoleWrite("$posXStart + 88 + $playerLeftBarWidth:" & $posXStart + 88 + $playerLeftBarWidth & @CRLF)
+			;ConsoleWrite("$posYStart + 88 + $playerTopBarHomeHeight:" & $posYStart + 88 + $playerTopBarHomeHeight & @CRLF)
+			;If $i2 > 1 Then
+			;	$posXFirstPixel = $posXFirstPixel + $pixelBetweenApp * ($i2-1)
+			;	$posXSecondPixel = $posXSecondPixel + $pixelBetweenApp * ($i2-1)
+			;	$posXThirdPixel = $posXThirdPixel + $pixelBetweenApp * ($i2-1)
+			;	$posXFourthPixel = $posXFourthPixel + $pixelBetweenApp * ($i2-1)
+			;EndIf
+
+			Local $whiteColor = getPixelColor($posXFirstPixel, $posYFirstPixel)
+			Local $whiteColor2 = getPixelColor($posXSecondPixel, $posYSecondPixel)
+			Local $blackColor = getPixelColor($posXThirdPixel, $posYThirdPixel)
+			Local $blueColor = getPixelColor($posXFourthPixel, $posYFourthPixel)
+
+			; Test
+			If $whiteColor = "FFFFFF" And $whiteColor2 = "FFFFFF" And $blackColor = "000000" And $blueColor = "53ABD2" Then
+				ConsoleWrite("$i:" & $i & @CRLF)
+				ConsoleWrite("$i2:" & $i2 & @CRLF)
+				tap($posXThirdPixel,$posYThirdPixel, 300, "small")
+				ExitLoop
+				;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test" & $i & "-" & $i2 & ".png", $hwnd, $posXStart + $playerLeftBarWidth, $posYStart + $playerTopBarHomeHeight, $posXStart + 88 + $playerLeftBarWidth, $posYStart + 88 + $playerTopBarHomeHeight)
+			EndIf
+			ConsoleWrite("$i:" & $i & @CRLF)
+			ConsoleWrite("$i2:" & $i2 & @CRLF)
+			$posXStart = $posXStart + $pixelBetweenApp
+
+			$posXFirstPixel = $posXFirstPixel + $pixelBetweenApp
+			$posXSecondPixel = $posXSecondPixel + $pixelBetweenApp
+			$posXThirdPixel = $posXThirdPixel + $pixelBetweenApp
+			$posXFourthPixel = $posXFourthPixel + $pixelBetweenApp
+		Next
+		$posYFirstPixel = $posYFirstPixel + $pixelBetweenLine
+		$posYSecondPixel = $posYSecondPixel + $pixelBetweenLine
+		$posYThirdPixel = $posYThirdPixel + $pixelBetweenLine
+		$posYFourthPixel = $posYFourthPixel + $pixelBetweenLine
+
+		; Test
+		Local $posXStart = 38
+		$posYStart = $posYStart + $pixelBetweenLine
+	Next
+	;Local $whiteColor = getPixelColor(698, 299)
+	;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, 698+$playerLeftBarWidth, 299+$playerTopBarHeight, 698+40+$playerLeftBarWidth, 299+40+$playerTopBarHeight)
+	;Local $whiteColor2 = getPixelColor(716, 282)
+	;Local $blackColor = getPixelColor(708, 317)
+	;Local $blueColor = getPixelColor(707, 289)
+	;ConsoleWrite("$whiteColor:" & $whiteColor & @CRLF)
+	;ConsoleWrite("$whiteColor2:" & $whiteColor2 & @CRLF)
+	;ConsoleWrite("$blackColor:" & $blackColor & @CRLF)
+	;ConsoleWrite("$blueColor:" & $blueColor & @CRLF)
+
 	addLog("Launching L2R app")
 	Sleep(20000)
 	checkAppPosition()
@@ -639,8 +729,9 @@ Func cron()
 	cron()
 EndFunc
 
-;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\currentview.png", $hwnd, 0,0, 1280, 750)
+_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\currentview.png", $hwnd)
 ;login() ;test
+
 cron()
 While 1
 	If $Interrupt <> 0 Then
