@@ -25,6 +25,9 @@
 #Include <Array.au3>
 #Include <String.au3>
 
+#include <WinAPI.au3>
+#include <GDIPlus.au3>
+
 ; Choose a player
 Global $player = "bluestack"
 ;Global $player = "noxplayer"
@@ -43,10 +46,13 @@ EndIf
 ;~ Get coordinate from our handler
 Opt("MouseCoordMode", 2)
 Opt("GUIOnEventMode", 1)
+Opt("PixelCoordMode", 0)
 WinMove($hwnd, "", Default, Default, 1280, 750)
 ;WinMove($hwnd, "", Default, Default, 960, 540)
 
 Global $mode_test = false
+
+Global $currentView, $isConnected
 
 ; Todays actions
 ; Allows the script to carry on from where it stopped
@@ -70,14 +76,75 @@ $colorGradeR = "0X00AD51F5"
 $colorGradeSR = "0X00E88B2A"
 $colorGradeUR = "0X00FF4246"
 
+Func createPNG($path, $left, $top, $width, $height)
+	Local Const $STM_SETIMAGE = 0x0172
+	_GDIPlus_Startup()
+	Local $hImage = _GDIPlus_ImageLoadFromFile($path)
+	Local $iW = _GDIPlus_ImageGetWidth($hImage)
+	Local $iH = _GDIPlus_ImageGetHeight($hImage)
+	Local $hBitmap = _GDIPlus_BitmapCloneArea($hImage, 0, 0, $iW, $iH, $GDIP_PXF32ARGB)
+	Local $hBmp = _GDIPlus_BitmapCreateHBITMAPFromBitmap($hBitmap)
+
+	_GDIPlus_BitmapDispose($hBitmap)
+	_GDIPlus_ImageDispose($hImage)
+	_GDIPlus_Shutdown()
+
+	Local $Pic = GUICtrlCreatePic("", $left, $top, $width, $height)
+	GUICtrlSendMsg($Pic, $STM_SETIMAGE, 0, $hBmp)
+	_WinAPI_DeleteObject($hBmp)
+
+	return $Pic
+EndFunc
+
 Global Const $sFontGeorgia = "Georgia"
 Global Const $sFontRoboto = "Roboto"
 ; Top bar
+; Red Gems
+Global $redGemsIcon = createPNG(@WorkingDir & "\img\redgems.png", 200, 2, 12, 14)
+Global $redGemsIconCounter = GUICtrlCreateLabel("126 941", 220, 3, 100, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlSetState($redGemsIcon, $GUI_HIDE)
+GUICtrlSetState($redGemsIconCounter, $GUI_HIDE)
+; Blue Gem
+Global $blueGemsIcon = createPNG(@WorkingDir & "\img\bluegems.png", 280, 2, 13, 13)
+Global $blueGemsIconCounter = GUICtrlCreateLabel("126 941", 300, 3, 100, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlSetState($blueGemsIcon, $GUI_HIDE)
+GUICtrlSetState($blueGemsIconCounter, $GUI_HIDE)
+; Adena
+Global $adenaIcon = createPNG(@WorkingDir & "\img\adena.png", 360, 2, 15, 14)
+Global $adenaIconCounter = GUICtrlCreateLabel("926 941 456", 380, 3, 100, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlSetState($adenaIcon, $GUI_HIDE)
+GUICtrlSetState($adenaIconCounter, $GUI_HIDE)
+; Friends Coin
+Global $friendsCoinIcon = createPNG(@WorkingDir & "\img\friendscoin.png", 460, 2, 15, 14)
+Global $friendsCoinCounter = GUICtrlCreateLabel("99 999", 480, 3, 100, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlSetState($friendsCoinIcon, $GUI_HIDE)
+GUICtrlSetState($friendsCoinCounter, $GUI_HIDE)
+; Clan Coin
+Global $clanCoinIcon = createPNG(@WorkingDir & "\img\clancoin.png", 540, 2, 15, 14)
+Global $clanCoinCounter = GUICtrlCreateLabel("99 999", 560, 3, 100, 25)
+GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
+GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
+GUICtrlSetColor(-1, 0X00FFFFFF)
+GUICtrlSetState($clanCoinIcon, $GUI_HIDE)
+GUICtrlSetState($clanCoinCounter, $GUI_HIDE)
+
 ; Status
 GUICtrlCreateLabel("Status:", 725, 4, 80, 20)
 GUICtrlSetFont(-1, 8, $FW_NORMAL , '', $sFontRoboto)
 GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
-GUICtrlSetColor(-1, 0X00000000)
+GUICtrlSetColor(-1, 0X00FFFFFF)
 Global $statusGame = GUICtrlCreateLabel("Offline", 760, 4, 750, 25)
 GUICtrlSetFont(-1, 8, $FW_HEAVY , '', $sFontRoboto)
 GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
@@ -165,7 +232,7 @@ GUICtrlSetFont(-1, 26, $FW_NORMAL , '', $sFontRoboto)
 GUICtrlSetBkColor(-1, $GUI_BKCOLOR_TRANSPARENT )
 GUICtrlSetColor(-1, 0X00FFFFFF)
 
-$RunBtn = GUICtrlCreateButton("Assist Me!", 558 , 20, 139, 40)
+$RunBtn = GUICtrlCreateButton("Assist Me!", 558 , 22, 139, 40)
 GUICtrlSetOnEvent($RunBtn, "RunnerFunc")
 GUICtrlSetFont(-1, 19, $FW_HEAVY , '', $sFontRoboto)
 $StopBtn = GUICtrlCreateButton("Stop Me!", 558 , 20, 139, 40)
@@ -192,7 +259,7 @@ Func RunnerFunc()
 		GUICtrlSetState($RunBtn, $GUI_HIDE)
 		GUICtrlSetState($StopBtn, $GUI_SHOW)
 	EndIf
-	addLog("Biaum is awake!")
+	addLog("Baium is awake!")
 	fetchData()
 	$Interrupt = 0
 	$EventCheck = 0
@@ -201,7 +268,7 @@ EndFunc
 Func StopFunc()
 	$Interrupt = 1
 	ConsoleWrite("StopFunc() $Interrupt " & $Interrupt & @CRLF)
-	addLog("Biaum is now sleeping.")
+	addLog("Baium is now sleeping.")
 	GUICtrlSetState($StopBtn, $GUI_HIDE)
 	GUICtrlSetState($RunBtn, $GUI_SHOW)
 	ConsoleWrite(">Stopped" & @CRLF)
@@ -218,17 +285,28 @@ Func ThatExit()
    Exit
 EndFunc
 
-Func tap($posX,$posY,$sleepTime = 0)
+Func tap($posX,$posY,$sleepTime = 0, $size = "normal")
 	Local $currentWindow = WinGetHandle("")
 	WinActivate($hwnd)
-	Local $randomPosX = randomTapPosition($posX, Random(1, 25, 1)) + $playerLeftBarWidth
-	Local $randomPosY = randomTapPosition($posY, Random(1, 10, 1)) + $playerTopBarHeight
+	If $size = "small" Then
+		Local $randPosX = Random(1, 2, 1)
+		Local $randPosY = Random(1, 2, 1)
+	ElseIf $size = "long" Then
+		Local $randPosX = Random(1, 15, 1)
+		Local $randPosY = Random(1, 2, 1)
+	Else
+		Local $randPosX = Random(1, 5, 1)
+		Local $randPosY = Random(1, 5, 1)
+	EndIf
+
+	Local $randomPosX = randomTapPosition($posX, $randPosX) + $playerLeftBarWidth
+	Local $randomPosY = randomTapPosition($posY, $randPosY) + $playerTopBarHeight
 	Local $mousePos = MouseGetPos()
 	MouseClick($MOUSE_CLICK_LEFT, $randomPosX, $randomPosY, 1, 0)
 	ConsoleWrite("$MOUSE_CLICK_LEFT x:" & $randomPosX & " y:" & $randomPosY & @CRLF)
 	MouseMove($mousePos[0],$mousePos[1],0)
 	WinActivate($currentWindow)
-	sleep($sleepTime + Random(1, 250, 1))
+	Sleep($sleepTime + Random(1, 250, 1))
 EndFunc
 
 Func fetchData()
@@ -275,6 +353,9 @@ Func readBasicInfo()
 	; Level
 	Global $basicInfoLevel = "Lv" & readScreenPlayer("basicInfoLevel",133,452,173,470)
 	ConsoleWrite("$basicInfoLevel " & $basicInfoLevel & @CRLF)
+	; Exp.
+	Global $basicInfoExp = "Exp. " & readScreenPlayer("basicInfoExp",774,394,830,412)
+	ConsoleWrite("$basicInfoExp " & $basicInfoExp & @CRLF)
 	; Red Gems
 	Global $basicInfoRedGems = readScreenPlayer("basicInfoRedGems",596,25,698,45)
 	ConsoleWrite("$basicInfoRedGems " & $basicInfoRedGems & @CRLF)
@@ -306,13 +387,25 @@ Func updateBasicInfo()
 		ElseIf $basicInfoGrade = "UR" Then
 			GUICtrlSetColor($basicInfoGradeData, $colorGradeUR)
 		EndIf
-	GUICtrlSetData($basicInfoCPData,$basicInfoCP)
-	GUICtrlSetData($basicInfoClassData,$basicInfoClass)
-	GUICtrlSetData($basicInfoAchivementGradeData,$basicInfoAchivementGrade)
-	GUICtrlSetData($basicInfoAchivementGradeNameData,$basicInfoAchivementGradeName)
-	GUICtrlSetData($basicInfoArenaGradeData,$basicInfoArenaGrade)
-	GUICtrlSetData($basicInfoArenaRankData,$basicInfoArenaRank)
-	GUICtrlSetData($basicInfoLevelData,$basicInfoLevel)
+	GUICtrlSetData($basicInfoCPData, $basicInfoCP)
+	GUICtrlSetData($basicInfoClassData, $basicInfoClass)
+	GUICtrlSetData($basicInfoAchivementGradeData, $basicInfoAchivementGrade)
+	GUICtrlSetData($basicInfoAchivementGradeNameData, $basicInfoAchivementGradeName)
+	GUICtrlSetData($basicInfoArenaGradeData, $basicInfoArenaGrade)
+	GUICtrlSetData($basicInfoArenaRankData, $basicInfoArenaRank)
+	GUICtrlSetData($basicInfoLevelData, $basicInfoLevel)
+	GUICtrlSetData($basicInfoExpData, $basicInfoExp)
+	GUICtrlSetData($redGemsIconCounter,$basicInfoRedGems)
+	GUICtrlSetState($redGemsIcon, $GUI_SHOW)
+	GUICtrlSetState($redGemsIconCounter, $GUI_SHOW)
+
+	GUICtrlSetData($blueGemsIconCounter,$basicInfoBlueGems)
+	GUICtrlSetState($blueGemsIcon, $GUI_SHOW)
+	GUICtrlSetState($blueGemsIconCounter, $GUI_SHOW)
+
+	GUICtrlSetData($adenaIconCounter,$basicInfoAdena)
+	GUICtrlSetState($adenaIcon, $GUI_SHOW)
+	GUICtrlSetState($adenaIconCounter, $GUI_SHOW)
 EndFunc
 
 Func randomTapPosition($pos, $range)
@@ -325,9 +418,60 @@ Func randomTapPosition($pos, $range)
 	Return $pos
  EndFunc
 
-Func LogInGame()
-	$loginPage = readScreenPlayer("loginscreen",24,21,170,48)
+Func isLoginView()
+	Local $loginPage = readScreenPlayer("loginscreen",605,440,805,468)
+	If $loginPage = "Find My Character" Then
+		Return True
+	Else
+		Return False
+	EndIf
 	ConsoleWrite("$loginPage " & $loginPage & @CRLF)
+EndFunc
+
+; Checking if New Popup at the login page are showing
+Func isPopupShow()
+	Local $lookingForWhite = Hex(PixelGetColor(1140+$playerLeftBarWidth, 22+$playerTopBarHeight, $hwnd), 6)
+	Local $lookingForWhite2 = Hex(PixelGetColor(1142+$playerLeftBarWidth, 22+$playerTopBarHeight, $hwnd), 6)
+	Local $lookingForBlack = Hex(PixelGetColor(1132+$playerLeftBarWidth, 25+$playerTopBarHeight, $hwnd), 6)
+	Local $lookingForBlack2 = Hex(PixelGetColor(1141+$playerLeftBarWidth, 18+$playerTopBarHeight, $hwnd), 6)
+	ConsoleWrite("$lookingForWhite: " & $lookingForWhite & @CRLF)
+	ConsoleWrite("$lookingForWhite2: " & $lookingForWhite2 & @CRLF)
+	ConsoleWrite("$lookingForBlack: " & $lookingForBlack & @CRLF)
+	ConsoleWrite("$lookingForBlack2: " & $lookingForBlack2 & @CRLF)
+	If $lookingForWhite = "2B2B2B" And $lookingForWhite2 = "FFFFFF" And $lookingForBlack = "000000" And $lookingForBlack2 = "000000" Then
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc
+
+; This function close any popup
+Func closePopup()
+	tap(1139,25, 120)
+EndFunc
+
+Func pressPlayButton()
+	tap(982,587, 200)
+	addLog("Play!")
+EndFunc
+
+Func login()
+	tap(579,305, 120)
+	addLog("Logging")
+	Sleep(10000)
+	; We check if a popup is there
+	If isPopupShow() = True Then
+		addLog("Closing the popup")
+		closePopup()
+	EndIf
+	Sleep(5000)
+	; Sometime, 2 popup is there
+	If isPopupShow() = True Then
+		addLog("Closing the second popup")
+		closePopup()
+	EndIf
+	Sleep(2000)
+	pressPlayButton()
 EndFunc
 
 Func readScreenPlayer($filename, $startPosX, $startPosY, $endPostX, $endPosdY, $multiLine = False)
@@ -374,8 +518,90 @@ Func updateData($value, $element, $fontColor = "0x0000FFFF")
 	GUICtrlSetColor($element, $fontColor)
 EndFunc
 
+Func relaunchApp()
+	Local $posX = 564-7
+	Local $posY = 79-35
+	tap($posX,$posY, 120, "small")
+	;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, $posX+$playerLeftBarWidth, $posY+$playerTopBarHeight, $posX+40+$playerLeftBarWidth, $posY+40+$playerTopBarHeight)
+	;Sleep(25000)
+	;tap(233,312, 120, "small")
+	addLog("Launching L2R app")
+	Sleep(20000)
+	checkAppPosition()
+	ConsoleWrite("$currentView: " & $currentView & @CRLF)
+	If $currentView = "loginView" Then
+		login()
+	EndIf
+EndFunc
+
+Func checkAppPosition()
+	Local $loginView = isLoginView()
+	If $loginView = True Then
+		addLog("Detecting login screen")
+		$currentView = "loginView"
+	EndIf
+
+	Return $currentView
+EndFunc
+
+; Am I Dead ? I should respawn ?
+Func amIDead()
+	Local $youWereKilledBy = readScreenPlayer("youWereKilledBy",280,65,859,108)
+	Local $check = StringInStr( $youWereKilledBy, "ou were killed by")
+	Local $check2 = StringInStr( $youWereKilledBy, "ouwere killed by")
+	Local $check3 = StringInStr( $youWereKilledBy, "Died.")
+	Local $check4 = StringInStr( $youWereKilledBy, "Dled.")
+	ConsoleWrite("$youWereKilledBy " & $youWereKilledBy & @CRLF)
+	If $check > 0 Or $check2 > 0 Or $check3 > 0 Or $check4 > 0 Then
+		addLog("Someone killed you!")
+		_ScreenCapture_CaptureWnd(@WorkingDir & "\deathLog\" & StringReplace(_NowDate(), "/", "-") & "_" & StringReplace(_NowTime(), ":", ".") & ".png", $hwnd)
+		Local $randSleep = Random(1000, 2500, 1)
+		Local $randSpawnStyle = Random(1, 5, 1)
+		Sleep($randSleep)
+		If $randSpawnStyle = 5 Then
+			waitingSpawnAuto()
+		Else
+			spotRevival()
+		EndIf
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc
+
+; Am I Disconnected ? I should relog ?
+Func amIDisconnected()
+	Local $disconnectedFromTheServer = readScreenPlayer("disconnectedFromTheServer",280,65,859,108)
+	Local $check = StringInStr( $disconnectedFromTheServer, "Disconnected from the server")
+	ConsoleWrite("$disconnectedFromTheServer " & $disconnectedFromTheServer & @CRLF)
+	If $check > 0 Then
+		addLog("You are disconnected, trying to reconnect...")
+		tap(709,469, 450, "long")
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc
+
+Func spotRevival()
+	tap(1042, 400, 250)
+	addLog("Respawning now to Spot Revival")
+	Sleep(1000)
+	closeDifferentWaysToStrengthenYourChar()
+EndFunc
+
+Func waitingSpawnAuto()
+	addLog("We are waiting to respawn automatically")
+	Local $randSleep = Random(35000, 65000, 1)
+	Sleep($randSleep)
+	closeDifferentWaysToStrengthenYourChar()
+EndFunc
+
+Func closeDifferentWaysToStrengthenYourChar()
+	tap(1128, 234, 250, 'small')
+EndFunc
+
 Func checkIsConnected()
-	sleep(5000) ; delay because this function is a recursive function
 	$sFilePath = @WorkingDir & '\cache\logged.txt'
 	$command = 'netstat -na | find "12000" > ' & $sFilePath
 	RunWait( @ComSpec & " /C " & $command, "", @SW_HIDE )
@@ -392,26 +618,34 @@ Func checkIsConnected()
 	$check = StringInStr( $sFileRead, "ESTABLISHED")
 	;ConsoleWrite("$check:" & $check & @CRLF)
 
-
 	If $check > 0 Then
 		updateData('Online', $statusGame, "0X0055C712")
+		Return True
 	Else
 		updateData('Offline', $statusGame, "0X00E1260C")
+		relaunchApp()
+		Return False
 	EndIf
-	checkIsConnected()
 EndFunc
 
-Func _startPlaying()
+Func cron()
+	sleep(5000) ; delay because this function is a recursive function
+	$isConnected = checkIsConnected()
+	If $isConnected = True Then
+		amIDead()
+	EndIf
+	amIDisconnected()
 
+	cron()
 EndFunc
 
 ;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\currentview.png", $hwnd, 0,0, 1280, 750)
-checkIsConnected()
+;login() ;test
+cron()
 While 1
 	If $Interrupt <> 0 Then
 		$EventCheck = 0
 	Else
 		$EventCheck = 1
-		_startPlaying()
 	EndIf
 WEnd
