@@ -285,9 +285,10 @@ Func ThatExit()
    Exit
 EndFunc
 
-Func tap($posX,$posY,$sleepTime = 0, $size = "normal")
+Func tap($posX,$posY,$sleepTime = 0, $size = "normal", $isIngame = True)
+
+	Sleep($sleepTime + Random(1, 250, 1))
 	Local $currentWindow = WinGetHandle("")
-	WinActivate($hwnd)
 	If $size = "small" Then
 		Local $randPosX = Random(1, 2, 1)
 		Local $randPosY = Random(1, 2, 1)
@@ -299,14 +300,24 @@ Func tap($posX,$posY,$sleepTime = 0, $size = "normal")
 		Local $randPosY = Random(1, 5, 1)
 	EndIf
 
-	Local $randomPosX = randomTapPosition($posX, $randPosX) + $playerLeftBarWidth
-	Local $randomPosY = randomTapPosition($posY, $randPosY) + $playerTopBarHeight
+	If $isIngame = True Then
+		Local $randomPosX = randomTapPosition($posX, $randPosX) + $playerLeftBarWidth
+		Local $randomPosY = randomTapPosition($posY, $randPosY) + $playerTopBarHeight
+		Local $newHwnd = $hwnd
+	Else
+		Local $randomPosX = randomTapPosition($posX, $randPosX)
+		Local $randomPosY = randomTapPosition($posY, $randPosY)
+		If $player = "bluestack" Then
+			Local $newHwnd = WinGetHandle("BlueStacks")
+		EndIf
+	EndIf
+	WinActivate($newHwnd)
+
 	Local $mousePos = MouseGetPos()
 	MouseClick($MOUSE_CLICK_LEFT, $randomPosX, $randomPosY, 1, 0)
 	ConsoleWrite("$MOUSE_CLICK_LEFT x:" & $randomPosX & " y:" & $randomPosY & @CRLF)
 	MouseMove($mousePos[0],$mousePos[1],0)
 	WinActivate($currentWindow)
-	Sleep($sleepTime + Random(1, 250, 1))
 EndFunc
 
 Func fetchData()
@@ -533,7 +544,7 @@ Func relaunchApp()
 	Local $searchButtonColorBluestack = getPixelColor(1107, 39)
 	ConsoleWrite("$searchButtonColorBluestack:" & $searchButtonColorBluestack & @CRLF)
 
-	;_SmcreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, 530+$playerLeftBarWidth, 22+$playerTopBarHeight, 530+200+$playerLeftBarWidth, 22+200+$playerTopBarHeight)
+	;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, 530+$playerLeftBarWidth, 22+$playerTopBarHeight, 530+200+$playerLeftBarWidth, 22+200+$playerTopBarHeight)
 	If $searchButtonColorBluestack = "C87E0F" Then
 		Global $bluestackTapMenu = True
 		Global $playerTopBarHomeHeight = $playerTopBarHeight
@@ -548,9 +559,6 @@ Func relaunchApp()
 	; Difference between line : 185px
 
 	; Test
-	Local $posXStart = 38
-	Local $posYStart = 84
-
 	Local $pixelBetweenApp = 156
 	Local $pixelBetweenLine = 185
 	$posYFirstPixel = 114
@@ -563,33 +571,31 @@ Func relaunchApp()
 		$posXThirdPixel = 84
 		$posXFourthPixel = 83
 		For $i2 = 1 To 7 Step 1
-			;ConsoleWrite("$posXStart + $playerLeftBarWidth:" & $posXStart + $playerLeftBarWidth & @CRLF)
-			;ConsoleWrite("$posYStart + $playerTopBarHomeHeight:" & $posYStart + $playerTopBarHomeHeight & @CRLF)
-			;ConsoleWrite("$posXStart + 88 + $playerLeftBarWidth:" & $posXStart + 88 + $playerLeftBarWidth & @CRLF)
-			;ConsoleWrite("$posYStart + 88 + $playerTopBarHomeHeight:" & $posYStart + 88 + $playerTopBarHomeHeight & @CRLF)
-			;If $i2 > 1 Then
-			;	$posXFirstPixel = $posXFirstPixel + $pixelBetweenApp * ($i2-1)
-			;	$posXSecondPixel = $posXSecondPixel + $pixelBetweenApp * ($i2-1)
-			;	$posXThirdPixel = $posXThirdPixel + $pixelBetweenApp * ($i2-1)
-			;	$posXFourthPixel = $posXFourthPixel + $pixelBetweenApp * ($i2-1)
-			;EndIf
-
 			Local $whiteColor = getPixelColor($posXFirstPixel, $posYFirstPixel)
 			Local $whiteColor2 = getPixelColor($posXSecondPixel, $posYSecondPixel)
 			Local $blackColor = getPixelColor($posXThirdPixel, $posYThirdPixel)
 			Local $blueColor = getPixelColor($posXFourthPixel, $posYFourthPixel)
 
+			If $bluestackTapMenu = True Then
+				$checkColor1 = "FFFFFF"
+				$checkColor2 = "FFFFFF"
+				$checkColor3 = "000000"
+				$checkColor4 = "53ABD2"
+			Else
+				$checkColor1 = "939393"
+				$checkColor2 = "FFFFFF"
+				$checkColor3 = "B2B3A5"
+				$checkColor4 = "000000"
+			EndIf
 			; Test
-			If $whiteColor = "FFFFFF" And $whiteColor2 = "FFFFFF" And $blackColor = "000000" And $blueColor = "53ABD2" Then
+			If $whiteColor = $checkColor1 And $whiteColor2 = $checkColor2 And $blackColor = $checkColor3 And $blueColor = $checkColor4 Then
 				ConsoleWrite("$i:" & $i & @CRLF)
 				ConsoleWrite("$i2:" & $i2 & @CRLF)
-				tap($posXThirdPixel,$posYThirdPixel, 300, "small")
+				ConsoleWrite("$posXThirdPixel:" & $posXThirdPixel & @CRLF)
+				ConsoleWrite("$posYThirdPixel:" & $posYThirdPixel & @CRLF)
+				tap($posXThirdPixel,$posYThirdPixel, 300, "small", false)
 				ExitLoop
-				;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test" & $i & "-" & $i2 & ".png", $hwnd, $posXStart + $playerLeftBarWidth, $posYStart + $playerTopBarHomeHeight, $posXStart + 88 + $playerLeftBarWidth, $posYStart + 88 + $playerTopBarHomeHeight)
 			EndIf
-			ConsoleWrite("$i:" & $i & @CRLF)
-			ConsoleWrite("$i2:" & $i2 & @CRLF)
-			$posXStart = $posXStart + $pixelBetweenApp
 
 			$posXFirstPixel = $posXFirstPixel + $pixelBetweenApp
 			$posXSecondPixel = $posXSecondPixel + $pixelBetweenApp
@@ -600,20 +606,7 @@ Func relaunchApp()
 		$posYSecondPixel = $posYSecondPixel + $pixelBetweenLine
 		$posYThirdPixel = $posYThirdPixel + $pixelBetweenLine
 		$posYFourthPixel = $posYFourthPixel + $pixelBetweenLine
-
-		; Test
-		Local $posXStart = 38
-		$posYStart = $posYStart + $pixelBetweenLine
 	Next
-	;Local $whiteColor = getPixelColor(698, 299)
-	;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, 698+$playerLeftBarWidth, 299+$playerTopBarHeight, 698+40+$playerLeftBarWidth, 299+40+$playerTopBarHeight)
-	;Local $whiteColor2 = getPixelColor(716, 282)
-	;Local $blackColor = getPixelColor(708, 317)
-	;Local $blueColor = getPixelColor(707, 289)
-	;ConsoleWrite("$whiteColor:" & $whiteColor & @CRLF)
-	;ConsoleWrite("$whiteColor2:" & $whiteColor2 & @CRLF)
-	;ConsoleWrite("$blackColor:" & $blackColor & @CRLF)
-	;ConsoleWrite("$blueColor:" & $blueColor & @CRLF)
 
 	addLog("Launching L2R app")
 	Sleep(20000)
@@ -729,9 +722,9 @@ Func cron()
 	cron()
 EndFunc
 
-_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\currentview.png", $hwnd)
+;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\currentview.png", $hwnd)
 ;login() ;test
-
+ConsoleWrite("isPopupShow():" & isPopupShow() & @CRLF)
 cron()
 While 1
 	If $Interrupt <> 0 Then
