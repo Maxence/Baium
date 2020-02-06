@@ -1,8 +1,17 @@
+; *** Start added by AutoIt3Wrapper ***
+#include <FileConstants.au3>
+#include <GDIPlusConstants.au3>
+#include <ListViewConstants.au3>
+#include <StaticConstants.au3>
+; *** End added by AutoIt3Wrapper ***
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_Icon=img\baium.ico
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.3
+#AutoIt3Wrapper_Compile_Both=y
+#AutoIt3Wrapper_UseX64=y
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.6
 #AutoIt3Wrapper_Res_Fileversion_AutoIncrement=p
 #AutoIt3Wrapper_Res_Language=1033
+#AutoIt3Wrapper_Add_Constants=n
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 ;~ L2R Assitance
 ;~ This helper can optimise your farming time to be free to PVP
@@ -28,9 +37,95 @@
 #include <WinAPI.au3>
 #include <GDIPlus.au3>
 
+Global $amIMoving = False
+Func goToFarmSpot()
+	;Sleep(10000)
+	$inEliteDungeon = amIInEliteDungeon()
+	Local $isElite = True
+	;$isElite = True
+	If $isElite = True And $inEliteDungeon = False Then
+		tap(836,28, 120) ; Menu
+		tap(218,597, 1200) ; Dungeon
+		tap(216,490, 1250) ; Normal Dungeon
+		tap(642,324, 1250) ; Elite Dungeon
+		tap(642,324, 1250) ; Elite Dungeon
+		tapScroll(286,540, 285,130)
+		tapScroll(286,540, 285,130)
+		ConsoleWrite("Tap on IT3" & @CRLF)
+		doubleTap(291,480, 2550) ; Elite Dungeon - Ivory Tower Catacomb 3
+		ConsoleWrite("Tap Enter" & @CRLF)
+		tap(1024,586, 1250, "small") ; Elite Dungeon - Enter Dungeon
+		tap(682,447, 1250, "small") ; Elite Dungeon - Enter Dungeon Alone
+		tap(701,467, 1250, "small") ; Elite Dungeon - Weak
+		Sleep(5000)
+	EndIf
+
+	tap(1057,112, 1000) ; Open the map
+	; Go To Destination
+	;tap(486,393, 500) ; IT3 Cave Sahara
+	;tap(311,371, 500) ; IT3 Dark General lv174
+	tap(527,199, 500) ; IT3 Dark Choir Dark Prima lv182
+	;tap(421,520, 500) ; Forest of Secrets Canopy Nymph Epee
+	;tap(378,518, 500) ; Forest of Secrets Canopy Nymph Epee
+	;tap(474,419, 500) ; Forest of Secrets Canopy - Secretive Grendel Lv206
+	;tap(421,283, 500) ; Haunted Necropolis - Stakato solider
+	addLog("Moving to your farm spot")
+	closeMenu() ; Close the map
+	Sleep(1000)
+	; We need to detect when we arrive to our spot
+	Local $i = 0, $checkingAutoMove
+	While 1
+		$checkingAutoMove = checkAutoMoving()
+		If $checkingAutoMove = True Then
+			Sleep(2000)
+		Else
+			; We will check 2 more times to be sure
+			$checkingAutoMove2 = checkAutoMoving()
+			Sleep(1000)
+			$checkingAutoMove3 = checkAutoMoving()
+			Sleep(1000)
+			$checkingAutoMove4 = checkAutoMoving()
+			If $checkingAutoMove2 = True Or $checkingAutoMove3 = True Or $checkingAutoMove4 = True Then
+				; Nothing to do
+			Else
+				ConsoleWrite("$checkingAutoMove " & $checkingAutoMove & @CRLF)
+				addLog("We are at farm spot")
+				addLog("Auto-Attack ON")
+				tap(850, 559, 250)
+				ExitLoop
+			EndIf
+		EndIf
+	WEnd
+	ConsoleWrite("Loop is done" & @CRLF)
+EndFunc
+
+Func closeMenu()
+	tap(777,24, 200)
+EndFunc
+
+Func checkAutoMoving()
+	$checkingAutoMove = readScreenPlayer("checkingAutoMove",508,384,657,406)
+	Local $check = StringInStr( $checkingAutoMove, "auto")
+	Local $check2 = StringInStr( $checkingAutoMove, "moving")
+	Local $check3 = StringInStr( $checkingAutoMove, "move")
+	Local $check4 = StringInStr( $checkingAutoMove, "auta")
+	Local $check5 = StringInStr( $checkingAutoMove, "mavine")
+	ConsoleWrite("$check " & $check & @CRLF)
+	ConsoleWrite("$check2 " & $check2 & @CRLF)
+	ConsoleWrite("$check3 " & $check3 & @CRLF)
+	ConsoleWrite("$checkingAutoMove " & $checkingAutoMove & @CRLF)
+	ConsoleWrite("========================" & @CRLF)
+	If $check > 0 Or $check2 > 0 Or $check3 > 0 Or $check4 > 0 Or $check5 > 0 Then
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc
+
+
 ; Choose a player
-Global $player = "bluestack"
-;Global $player = "noxplayer"
+;Global $player = "bluestack"
+Global $player = "noxplayer"
 ; We need to focus on our Nox player window
 If $player = "bluestack" Then
 	Global $hwnd = WinGetHandle("BlueStacks")
@@ -38,17 +133,21 @@ If $player = "bluestack" Then
 	Global $playerLeftBarWidth = 7
 	ConsoleWrite("Using Bluestack Player" & @CRLF)
 Else
-	Global $hwnd = WinGetHandle("NoxPlayer")
-	Global $playerTopBarHeight = 30
+	;Global $hwnd = WinGetHandle("NoxPlayer")
+	Global $hwnd = WinGetHandle("Dga")
+	Global $playerTopBarHeight = 33
 	Global $playerLeftBarWidth = 0
 	ConsoleWrite("Using Nox Player" & @CRLF)
+	$pos = WinGetPos($hwnd);$hGUI is your GUI handle
+	ConsoleWrite($pos[2] & "x" & $pos[3] & @CRLF)
 EndIf
 ;~ Get coordinate from our handler
 Opt("MouseCoordMode", 2)
 Opt("GUIOnEventMode", 1)
 Opt("PixelCoordMode", 0)
-WinMove($hwnd, "", Default, Default, 1280, 750)
-;WinMove($hwnd, "", Default, Default, 960, 540)
+;WinMove($hwnd, "", Default, Default, 1280, 750) ; High Resolution
+;WinMove($hwnd, "", Default, Default, 804, 490)
+;WinMove($hwnd, "", Default, Default, 1181, 900) ; Best Resolution
 
 Global $mode_test = false
 
@@ -235,6 +334,11 @@ GUICtrlSetColor(-1, 0X00FFFFFF)
 $RunBtn = GUICtrlCreateButton("Assist Me!", 558 , 22, 139, 40)
 GUICtrlSetOnEvent($RunBtn, "RunnerFunc")
 GUICtrlSetFont(-1, 19, $FW_HEAVY , '', $sFontRoboto)
+
+$farmBtn = GUICtrlCreateButton("Start Farm", 358 , 22, 139, 40)
+GUICtrlSetOnEvent($farmBtn, "goToFarmSpot")
+GUICtrlSetFont(-1, 19, $FW_HEAVY , '', $sFontRoboto)
+
 $StopBtn = GUICtrlCreateButton("Stop Me!", 558 , 20, 139, 40)
 GUICtrlSetOnEvent($StopBtn, "StopFunc")
 GUICtrlSetFont(-1, 19, $FW_HEAVY , '', $sFontRoboto)
@@ -285,20 +389,21 @@ Func ThatExit()
    Exit
 EndFunc
 
-Func tap($posX,$posY,$sleepTime = 0, $size = "normal", $isIngame = True)
+Func tap($posX,$posY,$sleepTime = 0, $size = "normal", $isIngame = True, $doubleClic = False)
 
-	Sleep($sleepTime + Random(1, 250, 1))
 	Local $currentWindow = WinGetHandle("")
 	If $size = "small" Then
 		Local $randPosX = Random(1, 2, 1)
 		Local $randPosY = Random(1, 2, 1)
-	ElseIf $size = "long" Then
+	ElseIf $size = "long" Or $size = "large" Then
 		Local $randPosX = Random(1, 15, 1)
 		Local $randPosY = Random(1, 2, 1)
 	Else
 		Local $randPosX = Random(1, 5, 1)
 		Local $randPosY = Random(1, 5, 1)
 	EndIf
+	$randPosX = 0;
+	$randPosY = 0;
 
 	If $isIngame = True Then
 		Local $randomPosX = randomTapPosition($posX, $randPosX) + $playerLeftBarWidth
@@ -312,10 +417,34 @@ Func tap($posX,$posY,$sleepTime = 0, $size = "normal", $isIngame = True)
 		EndIf
 	EndIf
 	WinActivate($newHwnd)
+	WinActivate($newHwnd)
 
 	Local $mousePos = MouseGetPos()
-	MouseClick($MOUSE_CLICK_LEFT, $randomPosX, $randomPosY, 1, 0)
-	ConsoleWrite("$MOUSE_CLICK_LEFT x:" & $randomPosX & " y:" & $randomPosY & @CRLF)
+	If $doubleClic = False Then
+		MouseClick($MOUSE_CLICK_LEFT, $randomPosX, $randomPosY, 1, 0)
+	Else
+		MouseClick($MOUSE_CLICK_LEFT, $randomPosX, $randomPosY, 2, 0)
+	EndIf
+	ConsoleWrite("$MOUSE_CLICK_LEFT x:" & $posX & "(" & $randomPosX & ")" & " y:" & $posY & "(" & $randomPosY & ")" & @CRLF)
+	MouseMove($mousePos[0],$mousePos[1],0)
+	WinActivate($currentWindow)
+	Sleep($sleepTime + Random(1, 250, 1))
+EndFunc
+
+Func doubleTap($posX,$posY,$sleepTime = 0, $size = "normal", $isIngame = True)
+	tap($posX,$posY,0, $size, $isIngame, True)
+	;Sleep($sleepTime)
+	;tap($posX,$posY,0, $size, $isIngame)
+	;Sleep($sleepTime)
+EndFunc
+
+Func tapScroll($posX,$posY, $newPosX,$newPosY)
+	Local $currentWindow = WinGetHandle("")
+	WinActivate($hwnd)
+
+	Local $mousePos = MouseGetPos()
+	MouseClickDrag($MOUSE_CLICK_LEFT, $posX, $posY, $newPosX, $newPosY, 100)
+	;ConsoleWrite("$MOUSE_CLICK_LEFT x:" & $randomPosX & " y:" & $randomPosY & @CRLF)
 	MouseMove($mousePos[0],$mousePos[1],0)
 	WinActivate($currentWindow)
 EndFunc
@@ -326,18 +455,19 @@ EndFunc
 
 Func readBasicInfo()
 	; Menu -> Character -> Character
-	tap(836,28, 120)
-	tap(218,44, 200)
-	tap(217,156, 1500)
+	;tap(574,20, 120)
+	;tap(148,33, 200)
+	;tap(148,111, 1500)
 
 	; Nickname
 	;$basicInfoNickname = readScreenPlayer("basicInfoNickname",913,305,997,334)
-	Global $basicInfoNickname = readScreenPlayer("basicInfoNickname",700,278,1000,308)
+	Global $basicInfoNickname = readScreenPlayer("basicInfoNickname",499,190,725,210)
 	ConsoleWrite("$basicInfoNickname " & $basicInfoNickname & @CRLF)
 	; Grade
 	;$basicInfoGrade = readScreenPlayer("basicInfoGrade",911,193,1015,288)
-	Global $basicInfoGrade = readScreenPlayer("basicInfoGrade",828,172,930,277)
+	Global $basicInfoGrade = readScreenPlayer("basicInfoGrade",579,126,620,174)
 	ConsoleWrite("$basicInfoGrade " & $basicInfoGrade & @CRLF)
+	Exit
 	; CP
 	;$basicInfoCP = readScreenPlayer("basicInfoCP",833,337,929,367)
 	;$basicInfoCP = readScreenPlayer("basicInfoCP",242,468,350,497)
@@ -376,7 +506,7 @@ Func readBasicInfo()
 	; Adena
 	Global $basicInfoAdena = readScreenPlayer("basicInfoAdena",944,25,1064,45)
 	ConsoleWrite("$basicInfoAdena " & $basicInfoAdena & @CRLF)
-	tap(1133,35, 200)
+	closeMenu()
 	updateBasicInfo()
 EndFunc
 
@@ -445,15 +575,17 @@ EndFunc
 
 ; Checking if New Popup at the login page are showing
 Func isPopupShow()
-	Local $lookingForWhite = getPixelColor(1140, 22)
-	Local $lookingForWhite2 = getPixelColor(1142, 22)
-	Local $lookingForBlack = getPixelColor(1132, 25)
-	Local $lookingForBlack2 = getPixelColor(1141, 18)
+	Local $lookingForWhite = getPixelColor(1141, 22)
+	Local $lookingForWhite2 = getPixelColor(1143, 22)
+	Local $lookingForBlack = getPixelColor(1133, 25)
+	Local $lookingForBlack2 = getPixelColor(1142, 18)
 	ConsoleWrite("$lookingForWhite: " & $lookingForWhite & @CRLF)
 	ConsoleWrite("$lookingForWhite2: " & $lookingForWhite2 & @CRLF)
 	ConsoleWrite("$lookingForBlack: " & $lookingForBlack & @CRLF)
 	ConsoleWrite("$lookingForBlack2: " & $lookingForBlack2 & @CRLF)
-	If $lookingForWhite = "2B2B2B" And $lookingForWhite2 = "FFFFFF" And $lookingForBlack = "000000" And $lookingForBlack2 = "000000" Then
+	;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\test.png", $hwnd, 1140+$playerLeftBarWidth, 22+$playerTopBarHeight, 1140+20+$playerLeftBarWidth, 22+20+$playerTopBarHeight)
+	;If $lookingForWhite = "2B2B2B" And $lookingForWhite2 = "FFFFFF" And $lookingForBlack = "000000" And $lookingForBlack2 = "000000" Then
+	If $lookingForWhite = "B9B9B9" And $lookingForWhite2 = "FFFFFF" And $lookingForBlack = "000000" And $lookingForBlack2 = "000000" Then
 		Return True
 	Else
 		Return False
@@ -468,22 +600,34 @@ EndFunc
 Func pressPlayButton()
 	tap(982,587, 200)
 	addLog("Play!")
+	Sleep(16000)
+	goToFarmSpot()
 EndFunc
 
 Func login()
 	tap(579,305, 120)
 	addLog("Logging")
 	Sleep(10000)
+	Local $foundPopup1 = False
+	Local $foundPopup2 = False
+
 	; We check if a popup is there
 	If isPopupShow() = True Then
 		addLog("Closing the popup")
 		closePopup()
+		$foundPopup1 = true
 	EndIf
 	Sleep(5000)
 	; Sometime, 2 popup is there
 	If isPopupShow() = True Then
 		addLog("Closing the second popup")
 		closePopup()
+		$foundPopup2 = True
+	EndIf
+	If $foundPopup1 = False And $foundPopup2 = False Then ; speedfix to close popup
+		tap(1134,30, 250, "small")
+		sleep(2500)
+		tap(1134,30, 250, "small")
 	EndIf
 	Sleep(2000)
 	pressPlayButton()
@@ -491,7 +635,9 @@ EndFunc
 
 Func readScreenPlayer($filename, $startPosX, $startPosY, $endPostX, $endPosdY, $multiLine = False)
 	_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\" & $filename & ".png", $hwnd, $startPosX+$playerLeftBarWidth, $startPosY+$playerTopBarHeight, $endPostX+$playerLeftBarWidth, $endPosdY+$playerTopBarHeight)
-	Local $value = _TessOcr(@WorkingDir & "\cache\" & $filename & ".png", @WorkingDir & "\cache\" & $filename)
+	ShellExecuteWait(@WorkingDir & '\lib\ImageMagick-7.0.7-33-portable-Q16-x64\magick.exe', '"' & @WorkingDir & '\cache\' & $filename & '.png" -sharpen 2% "' & @WorkingDir & '\cache\' & $filename & '-negate.png"' & "", Null, Null, @SW_HIDE)
+	ShellExecuteWait(@WorkingDir & '\lib\ImageMagick-7.0.7-33-portable-Q16-x64\magick.exe', '"' & @WorkingDir & '\cache\' & $filename & '-negate.png" -negate "' & @WorkingDir & '\cache\' & $filename & '-negate.png"' & "", Null, Null, @SW_HIDE)
+	Local $value = _TessOcr(@WorkingDir & "\cache\" & $filename & "-negate.png", @WorkingDir & "\cache\" & $filename)
 	Local $hFileOpen = FileOpen(@WorkingDir & "\cache\" & $filename & ".txt", $FO_READ)
     If $hFileOpen = -1 Then
         MsgBox($MB_SYSTEMMODAL, "", "An error occurred when reading the file.")
@@ -504,14 +650,17 @@ Func readScreenPlayer($filename, $startPosX, $startPosY, $endPostX, $endPosdY, $
 	If $multiLine = False Then
 		$sFileRead = StringRegExpReplace($sFileRead, "\n", "")
 	EndIf
-	return $sFileRead
+	return StringLower($sFileRead)
 EndFunc
 
 ;~ Fonction OCR qui utilise la librairie Tesseract de HP & Google
 Func _TessOcr($in_image, $out_file)
 	Local $Read
 	;Local $iReturn = ShellExecuteWait(@WorkingDir & "\lib\tesseract-ocr\tesseract.exe", $in_image & " " & $out_file & " -psm 6", Null, Null, @SW_HIDE)
-	Local $iReturn = ShellExecuteWait(@WorkingDir & "\lib\tesseract-4.0.0-alpha\tesseract.exe", $in_image & " " & $out_file & " -psm 6", Null, Null, @SW_HIDE)
+
+	;Local $iReturn = ShellExecuteWait(@WorkingDir & "\lib\tesseract-4.0.0-alpha\tesseract.exe", $in_image & " " & $out_file & " -psm 6", Null, Null, @SW_HIDE)
+	;Local $iReturn = ShellExecuteWait(@WorkingDir & "\lib\tesseract-4.0.0-alpha\tesseract.exe", $in_image & " " & $out_file & " -psm 6 -load_system_dawg 0", Null, Null, @SW_HIDE)
+	Local $iReturn = ShellExecuteWait(@WorkingDir & "\lib\tesseract-4.0.0-alpha\tesseract.exe", $in_image & " " & $out_file & " -psm 6 -l eng", Null, Null, @SW_HIDE)
 	;ConsoleWrite("@ProgramFilesDir:" & @ProgramFilesDir & " (x86)\Tesseract-OCR\tesseract.exe" & @CRLF)
 	;ConsoleWrite("param:" & '"' & $in_image & '" "' & $out_file & '" ' & '"-l eng"'  & '" ' &'" -psm 6"' & @CRLF)
 	If @error Then
@@ -541,6 +690,7 @@ Func relaunchApp()
 	;Sleep(25000)
 	;tap(233,312, 120, "small")
 	; First we have to detect if we got tab menu of bluestack
+	Local $launchingApp = False
 	Local $searchButtonColorBluestack = getPixelColor(1107, 39)
 	ConsoleWrite("$searchButtonColorBluestack:" & $searchButtonColorBluestack & @CRLF)
 
@@ -575,26 +725,46 @@ Func relaunchApp()
 			Local $whiteColor2 = getPixelColor($posXSecondPixel, $posYSecondPixel)
 			Local $blackColor = getPixelColor($posXThirdPixel, $posYThirdPixel)
 			Local $blueColor = getPixelColor($posXFourthPixel, $posYFourthPixel)
-
+			ConsoleWrite("$whiteColor:" & $whiteColor & @CRLF)
+			ConsoleWrite("$whiteColor2:" & $whiteColor2 & @CRLF)
+			ConsoleWrite("$blackColor:" & $blackColor & @CRLF)
+			ConsoleWrite("$blueColor:" & $blueColor & @CRLF)
 			If $bluestackTapMenu = True Then
 				$checkColor1 = "FFFFFF"
 				$checkColor2 = "FFFFFF"
+				$checkColor31 = "000000"
+				$checkColor32 = "000000"
+				$checkColor33 = "000000"
+				$checkColor34 = "000000"
 				$checkColor3 = "000000"
 				$checkColor4 = "53ABD2"
 			Else
 				$checkColor1 = "939393"
 				$checkColor2 = "FFFFFF"
-				$checkColor3 = "B2B3A5"
+				$checkColor31 = "B2B3A5" ; I dunno why this color has change...
 				$checkColor4 = "000000"
+				$checkColor32 = "898238"
+				$checkColor33 = "898138"
+				$checkColor34 = "5B3F68"
 			EndIf
 			; Test
-			If $whiteColor = $checkColor1 And $whiteColor2 = $checkColor2 And $blackColor = $checkColor3 And $blueColor = $checkColor4 Then
-				ConsoleWrite("$i:" & $i & @CRLF)
-				ConsoleWrite("$i2:" & $i2 & @CRLF)
-				ConsoleWrite("$posXThirdPixel:" & $posXThirdPixel & @CRLF)
-				ConsoleWrite("$posYThirdPixel:" & $posYThirdPixel & @CRLF)
-				tap($posXThirdPixel,$posYThirdPixel, 300, "small", false)
-				ExitLoop
+			ConsoleWrite("$i:" & $i & @CRLF)
+			ConsoleWrite("$i2:" & $i2 & @CRLF)
+			ConsoleWrite("$posXThirdPixel:" & $posXThirdPixel & @CRLF)
+			ConsoleWrite("$posYThirdPixel:" & $posYThirdPixel & @CRLF)
+			If $whiteColor = $checkColor1 And $whiteColor2 = $checkColor2 And $blueColor = $checkColor4 Then
+				ConsoleWrite("color match:" & @CRLF)
+				ConsoleWrite("$blackColor:" & $blackColor & @CRLF)
+				If $blackColor = $checkColor31 Or $blackColor = $checkColor32 Or $blackColor = $checkColor33 Or $blackColor = $checkColor34 Then
+					ConsoleWrite("$i:" & $i & @CRLF)
+					ConsoleWrite("$i2:" & $i2 & @CRLF)
+					ConsoleWrite("$posXThirdPixel:" & $posXThirdPixel & @CRLF)
+					ConsoleWrite("$posYThirdPixel:" & $posYThirdPixel & @CRLF)
+					doubleTap($posXThirdPixel,$posYThirdPixel, 300, "small", false)
+					addLog("Launching L2R app")
+					$launchingApp = True
+					ExitLoop
+				EndIf
 			EndIf
 
 			$posXFirstPixel = $posXFirstPixel + $pixelBetweenApp
@@ -608,7 +778,11 @@ Func relaunchApp()
 		$posYFourthPixel = $posYFourthPixel + $pixelBetweenLine
 	Next
 
-	addLog("Launching L2R app")
+	If $launchingApp = False Then
+		relaunchApp()
+	EndIf
+	ConsoleWrite("$launchingApp: " & $launchingApp & @CRLF)
+
 	Sleep(20000)
 	checkAppPosition()
 	ConsoleWrite("$currentView: " & $currentView & @CRLF)
@@ -632,10 +806,12 @@ Func amIDead()
 	Local $youWereKilledBy = readScreenPlayer("youWereKilledBy",280,65,859,108)
 	Local $check = StringInStr( $youWereKilledBy, "ou were killed by")
 	Local $check2 = StringInStr( $youWereKilledBy, "ouwere killed by")
-	Local $check3 = StringInStr( $youWereKilledBy, "Died.")
-	Local $check4 = StringInStr( $youWereKilledBy, "Dled.")
+	; Local $check3 = StringInStr( $youWereKilledBy, "Died.")
+	Local $check3 = StringInStr( $youWereKilledBy, "died")
+	Local $check4 = StringInStr( $youWereKilledBy, "dled.")
+	Local $check5 = StringInStr( $youWereKilledBy, "youwerekilledby")
 	ConsoleWrite("$youWereKilledBy " & $youWereKilledBy & @CRLF)
-	If $check > 0 Or $check2 > 0 Or $check3 > 0 Or $check4 > 0 Then
+	If $check > 0 Or $check2 > 0 Or $check3 > 0 Or $check4 > 0 Or $check5 > 0 Then
 		addLog("Someone killed you!")
 		_ScreenCapture_CaptureWnd(@WorkingDir & "\deathLog\" & StringReplace(_NowDate(), "/", "-") & "_" & StringReplace(_NowTime(), ":", ".") & ".png", $hwnd)
 		Local $randSleep = Random(1000, 2500, 1)
@@ -646,6 +822,8 @@ Func amIDead()
 		Else
 			spotRevival()
 		EndIf
+
+		goToFarmSpot()
 		Return True
 	Else
 		Return False
@@ -655,7 +833,7 @@ EndFunc
 ; Am I Disconnected ? I should relog ?
 Func amIDisconnected()
 	Local $disconnectedFromTheServer = readScreenPlayer("disconnectedFromTheServer",280,65,859,108)
-	Local $check = StringInStr( $disconnectedFromTheServer, "Disconnected from the server")
+	Local $check = StringInStr( $disconnectedFromTheServer, "disconnected from the server")
 	ConsoleWrite("$disconnectedFromTheServer " & $disconnectedFromTheServer & @CRLF)
 	If $check > 0 Then
 		addLog("You are disconnected, trying to reconnect...")
@@ -664,6 +842,84 @@ Func amIDisconnected()
 	Else
 		Return False
 	EndIf
+EndFunc
+
+Global $checkTimeToBuyPots = 0
+Global $lastValueHpPots = False
+Global $lastValueMpPots = False
+Func checkPots($potType)
+	If $potType = "hp" Then
+		Local $textValue = readScreenPlayer("hpPotCounter",1025,351, 1078,374)
+	Else
+		Local $textValue = readScreenPlayer("mpPotCounter",1025,351, 1078,374)
+	EndIf
+	;$textValue = "buy"
+	Local $check = StringInStr( $textValue, "buy")
+	$textValue = Int(StringRegExpReplace($textValue, ",", ""))
+	If $check = 0 And $textValue = 0 Then
+		$textValue = "nothingToDo"
+	EndIf
+	ConsoleWrite("$textValue " & $textValue & @CRLF)
+	Local $checkInt = IsInt($textValue)
+	ConsoleWrite("$checkInt " & $checkInt & @CRLF)
+	If $check > 0 Or $textValue <= 200 And $checkInt = 1 Then
+		Local $checkDiff = $lastValueHpPots - $textValue
+		If $lastValueHpPots  Then
+
+		EndIf
+
+		If $checkTimeToBuyPots > 8 Then
+			ConsoleWrite("Buying " & StringUpper($potType) & " Pots" & @CRLF)
+			addLog('No more ' & StringUpper($potType) & ' Pots, time to buy.')
+			openShop()
+			shopGoToConsumables()
+			; We are going to buy 1000 pots
+			If $potType = "hp" Then
+				shopBuyHpPots()
+				shopBuyHpPots()
+				shopBuyHpPots()
+				shopBuyHpPots()
+				shopBuyHpPots()
+			Else
+				shopBuyMpPots()
+				shopBuyMpPots()
+				shopBuyMpPots()
+				shopBuyMpPots()
+				shopBuyMpPots()
+			EndIf
+			closeMenu()
+			$checkTimeToBuyPots = 0
+		Else
+			; OCR do misstake, so let's check 4 times to be sure...
+			$checkTimeToBuyPots = $checkTimeToBuyPots + 1
+		EndIf
+	EndIf
+	If $potType = "hp" Then
+		$lastValueHpPots = $textValue
+	Else
+		$lastValueMpPots = $textValue
+	EndIf
+EndFunc
+
+Func openShop()
+	tap(953,34, 500, "small")
+EndFunc
+
+Func shopGoToConsumables()
+	tap(111,304, 500, "large")
+EndFunc
+
+Func shopBuyHpPots()
+	tap(353,493, 500)
+	tapBuy()
+EndFunc
+Func shopBuyMpPots()
+	tap(612,489, 500)
+	tapBuy()
+EndFunc
+
+Func tapBuy()
+	tap(799,597, 3000, "large")
 EndFunc
 
 Func spotRevival()
@@ -711,25 +967,45 @@ Func checkIsConnected()
 	EndIf
 EndFunc
 
+Func amIInEliteDungeon()
+	$color1 = getPixelColor(996, 207)
+	ConsoleWrite("$color1:" & $color1 & @CRLF)
+	If $color1 = "FF506E" Then
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc
+
 Func cron()
-	sleep(5000) ; delay because this function is a recursive function
 	$isConnected = checkIsConnected()
 	If $isConnected = True Then
 		amIDead()
 	EndIf
 	amIDisconnected()
-
-	cron()
+	;checkPots("hp")
+	;checkPots("mp")
 EndFunc
 
-;_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\currentview.png", $hwnd)
+; TEST SPOT
+_ScreenCapture_CaptureWnd(@WorkingDir & "\cache\currentview.png", $hwnd)
 ;login() ;test
-ConsoleWrite("isPopupShow():" & isPopupShow() & @CRLF)
-cron()
+;ConsoleWrite("isPopupShow():" & isPopupShow() & @CRLF)
+;tapScroll(286,540, 285,130)
+;tapScroll(286,540, 285,130)
+;WinMove($hwnd, "", Default, Default, 1280, 750) ; shit trick
+WinMove($hwnd, "", Default, Default, 804, 490) ; shit trick
+;tap(622,231, 500)
+
+$test = amIInEliteDungeon()
+ConsoleWrite("$test:" & $test & @CRLF)
+;cron()
 While 1
 	If $Interrupt <> 0 Then
 		$EventCheck = 0
 	Else
 		$EventCheck = 1
 	EndIf
+	cron()
+	Sleep(5000)
 WEnd
